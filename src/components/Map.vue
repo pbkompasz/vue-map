@@ -1,10 +1,10 @@
 <template>
     <div 
         id="mapContainer"
-        style="z-index:0; background-color: red"
+        style="z-index:0;"
         ref="mapContainer"
     >
-
+        asd
         <div
             class="row justify-between items-start edit"
             v-if="interactive"
@@ -395,35 +395,74 @@
     </div> 
 </template>
 
-<script>
-import { ref, onMounted, toRefs, onBeforeUnmount, watch } from 'vue'
-// // import { useQuasar } from 'quasar';
-// // import { client } from 'boot/axios'
-// // import 'leaflet/dist/leaflet.css'
-// // import L from 'leaflet'
-// // const GeoJSON = require('geojson')
-// // import Behaviour from 'classes/user/settings/Behaviour';
-// // import Location from 'classes/navigation/Location';
-// // import CreateLocationComponent from 'components/reusable/CreateLocation'
-// // import CreateRouteComponent from 'components/reusable/CreateRoute'
-// // import EditLocationComponent from 'components/reusable/EditLocation'
-// // import EditRouteComponent from 'components/reusable/EditRoute'
+<style scoped lang="sass">
+#mapContainer
+    width: 100%
+    height: 100%
+#mainDialog
+    background-color: rgba(255,255,255, 0)
+    height: 100%
+    max-width: 40%
+    box-shadow: none
+#mainDialogActive
+    height: 100%
+    background-color: rgba(255,255,255, 1)
+    max-width: 40%
+.edit
+    width: 100%
+    position: absolute
+#buttons
+    background-color: rgba(255,255,255, 0)
+    box-shadow: none
+    height: 100%
+.btn
+    background-color: white
+    width: 25px
+    height: 25px
+.btnActive
+    background-color: grey
+#editContent
+    max-width: 30%
+    min-width: 20%
+    width: 300px
+    color: black
+    margin: 0
+    padding: 0
+.searchbarhover
+    width: 240px
+.asd
+    width: 240px
+.searchbar:hover
+    width: 240px
+.searchbar
+    max-width: 350px
+    width: 100px
+    height: 25px
+    color: red
+    transition: width 0.5s
+#query
+    transition: visibility 0.5s, opacity 0.5s linear
+</style>
+<script lang="ts">
+
 export default {
     name: 'MapComponent',
     props: {
+        // Center of the map
         center: {
             type: Object,
             // Center of europe
             default(rawProps)   {
-                return GeoJSON.parse(
-                    { 
-                        name: 'Location A', 
-                        category: 'Store', 
-                        street: 'Market', 
-                        lat: 47.4811282,
-                        lng: 18.9902218
-                    }, 
-                    {Point: ['lat', 'lng']});
+                return {}
+                // return GeoJSON.parse(
+                //     { 
+                //         name: 'Location A', 
+                //         category: 'Store', 
+                //         street: 'Market', 
+                //         lat: 47.4811282,
+                //         lng: 18.9902218
+                //     }, 
+                //     {Point: ['lat', 'lng']});
                 // [47.4811282, 18.9902218],
             },
             validator(value) {
@@ -437,6 +476,7 @@ export default {
                 return value > 0;
             }
         },
+        // Some color
         color: {
             type: String, 
             default: '(128, 128, 128, 0)',
@@ -458,6 +498,119 @@ export default {
             type: Object,
             default: [],
         },
+        mode: {
+            type: String,
+            validator(value) {
+                return ['interactive', 'snapshot', 'responsive', ].includes(value)
+            },
+        },
+        // Tile layer
+        tileLayerUrl: {
+            type: [String, Object],
+            description: 'Used to load and display tile layers on the map',
+            default() {
+                // return 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+            },
+            validator(value) {
+                // if (object...)
+                // L.tileLayer(test)
+                return true
+            }
+        },
+        tileLayerZoomLevel: {
+            type: [Number],
+            description: 'Tile layer zoomIn level',
+            default() {
+                return 20
+            },
+            validator(value) {
+                return true
+            }
+        },
+        tileLayerAttribution: {
+            type: String,
+            description: 'String to be shown in the attribution control',
+            default() {
+                return '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            },
+            validator(value) {
+                // check if legit string
+                return true
+            }
+        },
+        width: {
+            type: [Number, String],
+            default: 300,
+            description: 'Map width in pixels',
+            validator(val) {
+                return true
+                if (typeof val === 'string' || val instanceof String) {
+                    const re = /[1-9]+px/;
+                    return /^(([1-9][0-9]+)|(0))px$/.test(val)
+                } 
+                return val > 0
+            },
+        },
+        height: {
+            type: [Number, String],
+            default: 300,
+            description: 'Map width in pixels',
+            validator(val: any|string|String) {
+                return true
+                if (typeof val === 'string' || val instanceof String) {
+                    const re = /[1-9]+px/;
+                    return /^(([1-9][0-9]+)|(0))px$/.test(val)
+                } 
+                return val > 0
+            },
+        },
+        // Gets passed to every subcomponent
+        dense: {
+            type: Boolean,
+            default: false,
+        },
+        // Gets passed to every subcomponent
+        // Tile layer changes to a dark one
+        // Every icon changes to a dark one
+        dark: {
+            type: Boolean,
+            default: false,
+        },
+        // object: {
+            // type: 'static-object|active-object|route',
+            // data: GeoJSON,
+            // icon: 'default',
+            // iconSize: 'xs|sm|md|lg|xl'.split('\''),
+            // emit event for moving object
+            // emit: true,
+            // called every time 
+            // fetchFunction
+            // fetchFunctionMask
+            // where to look for lat and lon
+            // refreshRate(in seconds),
+        // },
+        objects: {
+            type: Object,
+            validator(value) {
+                if (!Array.isArray(value)) {
+                    console.warn('Not array')
+                    return false
+                }
+                for (const el of value) {
+                    if (!['static-object', 'active-object', 'route'].includes(el.type)) {
+                        return false
+                    }
+                }
+                return true
+            },
+            default(rawProps) {
+                return []
+                // rawProps.map((prop) => {
+                //     if (!prop.icon) prop.icon = DEFAULT_OBJECT_ICON
+                //     if (!prop.icon) prop.icon = DEFAULT_OBJECT_ICON
+                // })        
+            },
+        },
         // Modes
         interactive: {
             type: Boolean,
@@ -474,777 +627,41 @@ export default {
         // Focused entity
         focused: {
             type: Object,
-        }
+        },
+        // location icon
+        locationIcon: {
+            type: String,
+            default: 'https://www.politiadefrontiera.ro/vault/images/ptfpin_green.png',
+        },
+        // vehicle icon
+        // route default color
+        // route highlight color
+        // zoom on location when selected
+        // show zoom buttons
+        // block mouse events on overlay
+        // block mouse events for each component
+        // emit click event
+        // 
     },
-    setup (props, {emit}) {
-        onMounted(() => {
-            console.log('asd')
-        })
-        const $q = useQuasar();
-        // Leaflet entry point
-        let mapDiv
-        // Map container ref
-        const mapContainer = ref(null)
-        // Overlay ref
-        const overlay = ref(null)
-        // Dark mode
-        const darkMode = ref($q.dark.isActive)
-        watch(() => $q.dark.isActive, val => {
-            darkMode.value = val
-        })
-        const { center, zoomLevel, interactive, positions, locations, routes, movingObjects, snapshot, responsive, } = toRefs(props)
-        // Focused entity
-        const focused = ref()
-        // Focused route
-        const focusedRoute = ref()
-        // Focused location
-        const focusedLocation = ref()
-        // Main dialog active
-        const trigger = ref(false)
-        const add = ref()
-        // Main dialog title
-        const title = ref('createLocation')
-        const titleNice = ref('Create new location')
-        // Search criteria
-        const searchCriteria = ref(null) 
-        // Search result
-        const searchResults = ref([]) 
-        // Create location name or coordinates
-        // Highlighted entities
-        const highlights = ref([])
-        // Search bar hovered 
-        const searchActive = ref(false)
-        // Search bar clicked 
-        const recommendationActive = ref(false)
-        // CONSTS
-        const LOGO_OFFSET_Y = -0.1
-        // Location store
-        const locationLayers = []
-        // Route store
-        const routeLayers = []
-        // Moving object store
-        const movingObjectLayers = []
-        // Icon store
-        const icon = {}
-        
-        // Leaflet setup method
-        // Gets called on mounted
-        const setupLeafletMap = ({
-            interactive = false,
-            snaphot = false,
-        }) => {
-            // Constructor with center location
-            mapDiv = L.map("mapContainer", {
-                closePopupOnClick: snapshot.value ? false : true,
-                dragging: snapshot.value ? false : true,
-                zoomControl: false,
-                attributionControl:false,
-            }).setView(center.value.geometry.coordinates.reverse(), zoomLevel.value);
-            // Set zoom level
-            // L.set
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            }).addTo(mapDiv);
-            L.Icon.Default.prototype.options.iconUrl = 'https://png.pngtree.com/png-vector/20190223/ourmid/pngtree-vector-house-icon-png-image_695369.jpg',
-            setupIconFn()
-            blockEventsOverOverlayFn()
-        } 
-        // TODO test
-        // rewrite to simple function with onmouseover
-        const blockEventsOverOverlayFn = () => {
-            mapDiv.on('movestart', () => {
-                mapMoving.value = true
-            })
-            mapDiv.on('moveend', () => {
-                mapMoving.value = false
-            })
-            return;
-            const { clientWidth, clientHeight } = mapContainer.value
-            const blockedTerritory =  [
-                {
-                    startX: 0,
-                    startY: 0,
-                    finishX: (searchActive.value) ? 250 : 150 ,
-                    finishY: (searchActive.value) ? 50 : 500 ,
-                },
-                {
-                    startX: (trigger.value) ? clientWidth - 700 : clientWidth - 150 ,
-                    startY: 0,
-                    finishX: clientWidth,
-                    finishY: clientHeight,
-                },
-            ]
-            // TODO
-            // if (popupWindowActive) {
-            //     blockedTerritory.push({
-            //         startX: 0,
-            //         startY: 0,
-            //         finishX: (searchActive.value) ? 250 : 150 ,
-            //         finishX: (searchActive.value) ? 50 : 500 ,
-            //     })
-            // }
-            const events = ['click', 'dblclick', 'scrollWheelZoom', 'dragging', 'mousewheel', ]
-            const checkIfEventIsBlocked = (x, y) => {
-                // console.log({x, y, })
-                for (const territory in blockedTerritory) {
-                    // console.log(blockedTerritory[territory])    
-                    if (x >= blockedTerritory[territory].startX && x <= blockedTerritory[territory].finishX &&
-                        y >= blockedTerritory[territory].startY && y <= blockedTerritory[territory].finishY) {
-                        return true
-                    }
-                }
-                return false
-            }
-            events.forEach((event) => {
-                mapDiv.on(event, (resp) => {
-                    // console.log(resp)
-                    if (checkIfEventIsBlocked(resp.containerPoint.x, resp.containerPoint.y)) {
-                        // console.log('block')
-                        mapDiv.dragging.disable();
-                        mapDiv.touchZoom.disable();
-                        mapDiv.doubleClickZoom.disable();
-                        mapDiv.scrollWheelZoom.disable();
-                        mapDiv.boxZoom.disable();
-                        mapDiv.keyboard.disable();
-                    }
-                    mapDiv.dragging.enable();
-                    mapDiv.touchZoom.enable();
-                    mapDiv.doubleClickZoom.enable();
-                    mapDiv.scrollWheelZoom.enable();
-                    mapDiv.boxZoom.enable();
-                    mapDiv.keyboard.enable();
-                })
-            })
-            // TODO same with mousewheel event
-            L.DomEvent.on(mapDiv.getContainer(), 'mousewheel', function() {
-                console.log(L.DomEvent.getMousePosition())
-            });
-        }
-        // Draw routes
-        const drawRoutesFn = (routes) => {
-            // const route = routes[0]
-            routes.forEach((route) => {
-                const geojsonLayer = L.geoJson(route.raw, {
-                    style: function(feature) {
-                        return {
-                            stroke: true,
-                            color: "grey",
-                            weight: 3
-                        };
-                    },
-                    onEachFeature: function(feature, layer) {
-                        layer.bindPopup("id: " + route.id + "<br>")
-                    }
-                }).addTo(mapDiv);
-                routeLayers.push(geojsonLayer)
-                mapDiv.fitBounds(geojsonLayer.getBounds());
-                geojsonLayer.on('click', (event) => {
-                    const geometry =  event.layer.feature.geometry
-                    const route = routes.find((route) => {
-                        return route.raw.geometry == geometry
-                    })
-                    focusedRoute.value = route
-                    focused.value = { 
-                        type: 'route',
-                        entity: route,
-                    }
-                    focusOnRouteFn(geojsonLayer)     
-                    setRouteActiveFn(geojsonLayer)
-                })
-            })
-        }
-        // TODO
-        // Focus on route, change color, set center on route
-        const focusOnRouteFn = (routeLayer) => {
-            // Get bounds object
-            const bounds = routeLayer.getBounds()
-            // Fit the map to the polygon bounds
-            mapDiv.fitBounds(bounds)
-            // Or center on the polygon
-            const center = bounds.getCenter()
-            mapDiv.flyTo(center)
-        }
-        // Focus on location, change icon, set center to location
-        const focusOnLocationFn = (locationLayer, zoomLevel = 8) => {
-            // Change icon
-            changeIconFn(locationLayer, icon.focused)
-            // Set center
-            mapDiv.flyTo([locationLayer._latlng.lat, locationLayer._latlng.lng], zoomLevel)
-        }
-        // Unfocus location, change icon to default
-        const unfocusLocationFn = (locationLayer) => {
-            changeIconFn(locationLayer, icon.greenIcon)
-        }
-        // Create icons
-        const setupIconFn = () => {
-            var LeafIcon = L.Icon.extend({
-            options: {
-                    iconSize: 		[21, 34], 
-                    iconAnchor: 	[11, 0],
-                    popupAnchor: 	[0, 0],
-                }
-            });
-            // TODO
-            // Download and change to local
-            icon.greenIcon = new LeafIcon({
-                iconUrl: 'https://www.politiadefrontiera.ro/vault/images/ptfpin_green.png',
-                offset: false,
-            })
-            icon.focused = new LeafIcon({
-                iconUrl: 'https://www.politiadefrontiera.ro/vault/images/ptfpin_red.png',
-                offset: false,
-            })
-            icon.defaultLocation = new LeafIcon({
-                iconUrl: 'https://www.politiadefrontiera.ro/vault/images/ptfpin_red.png',
-                offset: false,
-            })
-            icon.defaultCar = new LeafIcon({
-                iconUrl: 'icons/car.png',
-                offset: true,
-            })
-            icon.car2 = new LeafIcon({
-                iconUrl: 'icons/car2.png',
-            })
-            icon.carCombi = new LeafIcon({
-                iconUrl: 'icons/car-combi.png',
-            })
-            icon.pickup = new LeafIcon({
-                iconUrl: 'icons/pickup.png',
-            })
-            icon.defaultVan = new LeafIcon({
-                iconUrl: 'icons/van.png',
-            })
-            icon.van2 = new LeafIcon({
-                iconUrl: 'icons/van2.png',
-            })
-            icon.defaultSemiTruck = new LeafIcon({
-                iconUrl: 'icons/test.png',
-            })
-            icon.defaultSemiTrailer = new LeafIcon({
-                iconUrl: 'icons/test.png',
-            })
-            icon.defaultVehicle = new LeafIcon({
-                iconUrl: 'icons/car.png',
-            })
-            icon.defaultBorderCrossing = new LeafIcon({
-                iconUrl: 'https://www.politiadefrontiera.ro/vault/images/ptfpin_red.png',
-            })
-            icon.defaultLoading = new LeafIcon({
-                iconUrl: 'https://www.politiadefrontiera.ro/vault/images/ptfpin_red.png',
-            })
-            icon.defaultUnloading = new LeafIcon({
-                iconUrl: 'https://www.politiadefrontiera.ro/vault/images/ptfpin_red.png',
-            })
-        }
-        // Change icon on loayer
-        const changeIconFn = (locationLayer, icon) => {
-            locationLayer.setIcon(icon);
-        }
-        // Draw locations received as props
-        // Location markers are stored in locationMarkers
-        const drawLocationsFn = (locations) => {
-            locations.forEach((location) => {
-                const lat = location.raw.geometry.coordinates[1];
-                const lon = location.raw.geometry.coordinates[0];
-                // create a new marker using the icon style
-                const marker = L.marker([lat,lon],{
-                    icon: icon.greenIcon
-                }).addTo(mapDiv)
-                const popup = location.raw.properties.description ? (location.raw.properties.name + '<br />' + location.raw.properties.description) : (location.raw.properties.name)
-                marker.bindPopup(popup)
-                locationLayers.push(marker)
-                marker.on('click', (event) => {
-                    const location = locations.find((location) => {
-                        return (event.latlng.lat == location.raw.geometry.coordinates[1] && event.latlng.lng == location.raw.geometry.coordinates[0] )
-                    })
-                    focusedLocation.value = location
-                    focused.value = { 
-                        type: 'location',
-                        entity: location,
-                    }
-                    focusOnLocationFn(marker)
-                    setTimeout(() => {
-                        unfocusLocationFn(marker) 
-                    }, 1000);
-                })
-            })
-        }
-        // Draw moving object (vehicle, etc. )
-        // Store moving object in movingObject array
-        // default: follow = true
-        const drawMovingObjectsFn = (objects) => {
-            objects.forEach((object) => {
-                const lat = object.raw.geometry.coordinates[1];
-                const lon = object.raw.geometry.coordinates[0];
-                // create a new marker using the icon style
-                const marker = L.marker([lat,lon],{
-                    icon: icon[object.icon]
-                }).addTo(mapDiv)
-                marker.options = {
-                    follow: true,
-                }
-                movingObjectLayers.push(marker)
-                .bindPopup(object.popup) 
-                createFollowJobFn(object)
-                // marker.on('click', (event) => {
-                //     const location = locations.find((location) => {
-                //         return (event.latlng.lat == location.raw.geometry.coordinates[1] && event.latlng.lng == location.raw.geometry.coordinates[0] )
-                //     })
-                //     focusedLocation.value = location
-                //     focused.value = { 
-                //         type: 'location',
-                //         entity: location,
-                //     }
-                //     focusOnLocationFn(marker)
-                //     setTimeout(() => {
-                //         unfocusLocationFn(marker) 
-                //     }, 1000);
-                // })
-            })
-        }
-        const createFollowJobFn = (object) => {
-            new CronJob('*/5 * * * * *', fetchLocationFn(object.id)); 
-        }
-        // Mapbox setup method
-        // Only called inside onMounted when map is interactive
-        const setupMapbox = () => {
-            // const mbxClient = require('@mapbox/mapbox-sdk');
-            // const baseClient = new mbxClient({ accessToken: process.env.MAPBOX_API_KEY });
-            // const mbxDirections = require('@mapbox/mapbox-sdk/services/directions');
-            // const directionClient = mbxDirections(baseClient)
-            // // Just for testing
-            // directionClient.getDirections({
-            //     profile: 'cycling',
-            //     geometries: 'geojson',
-            //     waypoints: [
-            //         {
-            //         coordinates: [-84.518399,39.134126],
-            //         approach: 'unrestricted'
-            //         },
-            //         {
-            //         coordinates: [-84.511987,39.102638]
-            //         },
-            //     ]
-            //     })
-            // .send()
-            // .then(response => {
-            //         const directions = response.body;
-            //         console.log(directions)
-            // });  
-            
-        }
-        // Only a fixed map is visible
-        // No events emited, no functions can be called
-        // Cron jobs inactive
-        const toggleSnapshotModeFn = () => {
-            console.log('Toogle snapshot mode')
-            // L.zoomControl = false
-            L.closePopupOnClick(false).affTo(mapDiv)
-            mapDiv.dragging = false
-        }
-        // Toogle interactive mode
-        const toggleInteractiveFn = () => {
-            console.log('Toggle interactive mode')
-        }
-        let CronJob = null
-        // Toggle responsive mode
-        const toggleResponsiveFn = () => {
-            console.log('Toggle responsive mode')
-            // Job that runs every 5 seconds
-            CronJob = require('cron').CronJob;
-        }
-        const fetchLocationFn = async (id) => {
-            await client.post()
-            // OR
-            // websockets
-        }
-        // Think it's obsolete
-        watch(locations, (val) => {
-            try {
-                drawLocationsFn(locations.value)
-                if (locations.value && locations.value.length>  0)
-                    focusedLocation.value = locations.value[0]
-            } catch (error) {
-                console.log(error) 
-                emit('error')
-            }
-        })
-        // Think it's obsolete
-        watch(routes, (val) => {
-            try {
-                drawRoutesFn(routes.value)
-                if (routes.value && routes.value.length > 0)
-                    focusedRoute.value = routes.value[0]
-            } catch (error) {
-                console.log(error)
-                emit('error') 
-            }
-        })
-        // Watch if an entity is focused
-        watch(focused, (val) => {
-            if (val.type == 'location') {
-                trigger.value = true
-                title.value = 'editLocation'
-            } else if (val.type == 'route') {
-                trigger.value = true
-                title.value = 'editRoute'
-            } 
-        })
-        // Watch title for main sidebar
-        watch(title, (val) => {
-            switch (val) {
-                case 'createLocation':
-                    titleNice.value = 'Create new location' 
-                    break;
-                case 'createRoute':
-                    titleNice.value = 'Create new route' 
-                    break;
-                case 'search':
-                    titleNice.value = 'Search' 
-                    break;
-                case 'insert':
-                    titleNice.value = 'Insert' 
-                    break;
-                case 'editLocation':
-                    setLocationEditableFn()
-                    titleNice.value = 'Edit location' 
-                    break;
-                case 'editRoute':
-                    setRouteEditableFn()
-                    titleNice.value = 'Edit route' 
-                    break;
-                case 'addCheckpoint':
-                    titleNice.value = 'Add checkpoint' 
-                    break;
-                case 'highlight':
-                    titleNice.value = 'Highlight' 
-                    break;
-                default:
-                    titleNice.value = ''
-                    break;
-            }
-        })
-        
-        onMounted(() => {
-            // Setup leaflet
-            setupLeafletMap({
-                interactive: interactive.value,
-                snaphot: snapshot.value,
-            })
-            
-            // TODO Move mapbox to the backend
-            // Setup MapBox
-            if (interactive.value)
-                setupMapbox()
-            
-            // if (snapshot.value) {
-            //     toggleSnapshotMode()
-            // }
-        })
-        // Stop jobs fetching active entities' locations
-        onBeforeUnmount(() => {
-            if (responsive.value) {
-                FetchVehiclesLocationsJob.stop();
-            }
-        })
-        // Activate main sidebar, set title
-        const triggerFn = (type, name) => {
-            if (!interactive) {
-                console.log('Actions allowed only in interactive mode')
-                return;
-            }
-            trigger.value = true
-            title.value = type
-        }
-        // Watch for main sidebar activity, trigger offset accordingly
-        watch(trigger, (val) => {
-            if (val) {
-                offsetMapFn(+1) 
-            } else {
-                offsetMapFn(-1) 
-            }
-        })
-        // Watch for popups
-        // watch(popups, (val) => {
-        // }, { deep: true, }
-        // )
-        // Search with filters locally, on the backend and or on a service
-        const searchFn = async (criteria) => {
-            console.log(locations.value)
-            console.log(movingObjects.value)
-            // Search local 
-            const localRes = []
-            // (locations.value).concat(movingObjects.value).forEach((entity) => {
-            //     console.log(entity.raw.properties)
-            // })
-            // Search backend
-            // const searchBackendPromise = 
-            // Search mapbox
-            // const searchMapbox =
-            // return await Promise.all(searchLocalPromise, searchBackendPromise, searchMapbox) 
-        }
-        
-        // Parse GeoJSON's properties into a location dictionary
-        const locationNice = (id) => {
-            const loc = locations.value.find((location) => {
-                return location.id == id
-            })
-            console.log(loc)
-            const locNice = {
-                id: loc.id,
-                name: loc.raw.properties.name,
-                street: loc.raw.properties.street,
-                description: loc.raw.properties.description,
-                googleMapsLink: loc.raw.properties.googleMapsLink,
-                lat: loc.raw.geometry.coordinates[1],
-                lon: loc.raw.geometry.coordinates[0],
-            }
-            return locNice
-        }
-        // Zoom in or out
-        const zoomFn = (type) => {
-            if (type == 'in')
-                mapDiv.zoomIn()
-            else if (type == 'out')
-                mapDiv.zoomOut()
-        }
-        const createLocationFn = async (locationRaw) => {
-            try {
-                const location = new Location({ 
-                    raw: locationRaw,
-                });
-                const resp = await location.save()
-                emit('create:location', resp)
-            } catch (error) {
-                console.log(error)
-                
-            }
-        }
-        const toggleChangeLocationFn = (id) => {
-        }
-        const toggleEditLocationFn = (id) => {
-        }
-        // Show notification
-        const throwNotifcation = ({
-            error : Boolean = false,
-            timeout,
-            position,
-        }) => {
-        }
-        const routeToEdit = ref({})
-        // Set a route as editable
-        // If no route is specified set the focused route entity the editable
-        const setRouteEditableFn = (route) => {
-            if (!route && focusedRoute.value) { 
-                route = focusedRoute.value
-            }
-            const start = locationNice(route.start)
-            const destination = locationNice(route.destination)
-            const intermediaryLocations = []
-            if (route.intermediaryLocations)
-                route.intermediaryLocations.forEach((loc) => {
-                    intermediaryLocations.push(locationNice(loc))
-                })
-            routeToEdit.value = {
-                start,
-                destination,
-                intermediaryLocations,
-            }
-        }
-        const locationToEdit = ref({})
-        // Set a location as editable
-        // If no location is specified set the focused location entity the editable
-        const setLocationEditableFn = (location) => {
-            if (location) {
-                locationToEdit.value = location
-                return;
-            }
-            if (focusedLocation.value) {
-                locationToEdit.value = focusedLocation.value
-            }
-        }
-        // offset map, called when main sidebar is active or a popup window appears
-        const offsetMapFn = (dir) => {
-            // Calculate the offset
-            const offset = mapDiv.getSize().x*0.15;
-            // Then move the map
-            mapDiv.panBy(new L.Point(dir * offset, 0), {
-                animate: true,
-                duration: 0.5,
-            });
-        }
-        const focusSearchFn = (active) => {
-            if (active) {
-                recommendationActive.value = true
-                searchActive.value = false
-            }
-            else {
-                recommendationActive.value = false
-                setTimeout(() => {
-                    searchActive.value = false
-                }, 500); 
-            }
-        }
-        const leaveSearchFn = (leave) => {
-            if (leave) {
-                if (!recommendationActive.value)
-                    searchActive.value = false
-                else {
-                    searchActive.value = true
-                }
-            } else {
-                searchActive.value = true
-            }
-            
-        }
-        const dummyLocationLayer = ref()
-        const focusBeforeCreateFn = (coord) => {
-            createDummyLocationFn(coord)
-        }
-        const createDummyLocationFn = (coord) => {
-            if (dummyLocationLayer.value) {
-                mapDiv.removeLayer(dummyLocationLayer.value)
-            }
-            // create a new marker using the icon style
-            const marker = L.marker([coord.lat, coord.lon],{
-                icon: icon.greenIcon
-            }).addTo(mapDiv)
-            mapDiv.flyTo([marker._latlng.lat, marker._latlng.lng], 8)
-            dummyLocationLayer.value = marker
-        }
-        const changeTypeBeforeCreateFn = (type) => {
-            switch (type) {
-                case 'loading':
-                    changeIconFn(dummyLocationLayer.value, icon.car2)
-                    break;
-                case 'loading':
-                    changeIconFn(dummyLocationLayer.value, icon.loading)
-                    break;
-                case 'unloading':
-                    changeIconFn(dummyLocationLayer.value, icon.unloading)
-                    break;
-                case 'meetup':
-                    changeiconfn(dummylocationlayer.value, icon.meetup)
-                    break;
-                case 'store':
-                    changeiconfn(dummylocationlayer.value, icon.store)
-                    break;
-                case 'border-crossing':
-                    changeiconfn(dummylocationlayer.value, icon['border-crossing'])
-                    break;
-                case 'checkpoint':
-                    changeiconfn(dummylocationlayer.value, icon.checkpoint)
-                    break;
-                default:
-                    break;
-            }
-        }
-        const updatePopupBeforeCreateFn = (data) => {
-            let popup = ''
-            if (data.name)
-                popup += `<div style="font-weight: bold;text-decoration: underline;">${data.name}<div><br/>`
-            if (data.description)
-                popup += `<p>${data.description}<p>`
-            if (dummyLocationLayer) {
-                dummyLocationLayer.value.bindPopup(popup)
-                dummyLocationLayer.value.openPopup();
-            }
-        }
-        const setRouteActiveFn = (routeLayer) => {
-            routeLayer.setStyle({
-                color: '#3388ff',
-                weight: 5,
-            })
-        }
-        const mapMoving = ref(false)
-        const blockMouseFn = () => {
-            if (!mapMoving.value)
-                mapDiv.dragging.disable();
-            mapDiv.touchZoom.disable();
-            mapDiv.doubleClickZoom.disable();
-            mapDiv.scrollWheelZoom.disable();
-            mapDiv.boxZoom.disable();
-            mapDiv.keyboard.disable();
-        }
-        const unblockMouseFn = () => {
-            mapDiv.dragging.enable();
-            mapDiv.touchZoom.enable();
-            mapDiv.doubleClickZoom.enable();
-            mapDiv.scrollWheelZoom.enable();
-            mapDiv.boxZoom.enable();
-            mapDiv.keyboard.enable();
-        }
-        const updateLocationFn = async (locationRaw) => {
-            console.log(locationToEdit.value.id)
-            try {
-                const location = Location.find(locationToEdit.value.id)
-                location.raw = locationRaw
-                const resp = await location.update(['raw'])
-                emit('update:location', resp)
-            } catch (error) {
-                console.log(error)
-                
-            }
-        }
-        return {
-            center,
-            center, 
-            zoomLevel, 
-            interactive, 
-            positions, 
-            locations, 
-            routes, 
-            movingObjects,
-            snapshot,
-            trigger,
-            add,
-            triggerFn,
-            responsive,
-            zoomFn,
-            title,
-            titleNice,
-            searchCriteria,
-            searchResults,
-            searchFn,
-            darkMode,
-            options: [1, 2, 3],
-            model: ref(),
-            createLocationFn,
-            focused,
-            locationNice,
-            toggleChangeLocationFn,
-            toggleEditLocationFn,
-            focusOnLocationFn,
-            routeToEdit,
-            locationToEdit,
-            overlay,
-            mapContainer,
-            searchActive,
-            recommendationActive,
-            leaveSearchFn,
-            focusedRoute,
-            focusedLocation,
-            focusSearchFn,
-            focusBeforeCreateFn,
-            highlights,
-            changeTypeBeforeCreateFn,
-            updatePopupBeforeCreateFn,
-            setRouteActiveFn,
-            blockMouseFn,
-            unblockMouseFn,
-            mapMoving,
-            updateLocationFn,
-        }
-    },
-    components: {
-        CreateLocationComponent,
-        CreateRouteComponent,
-        EditLocationComponent,
-        EditRouteComponent,
-    }
+    
+    
+    
 }
 // TODO
 // set routes[0] and locations[0] as initial selected routes
 // Zoom on select
 // Hover popup
 </script>
+
+
+
+<script setup lang="ts">
+import { ref } from 'vue'
+
+defineProps<{ msg: string }>()
+
+const count = ref(0)
+</script>
+
+
+
