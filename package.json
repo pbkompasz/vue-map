@@ -8,6 +8,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "geojson": "^0.5.0",
+    "geojson-validation": "^1.0.2",
+    "leaflet": "^1.8.0",
     "vue": "^3.2.25"
   },
   "devDependencies": {
