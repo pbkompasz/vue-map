@@ -1,397 +1,9 @@
 <template>
     <div 
         id="mapContainer"
-        style="z-index:0;"
+        style="z-index:0; width: 400px; height: 400px"
         ref="mapContainer"
     >
-        asd
-        <div
-            class="row justify-between items-start edit"
-            v-if="interactive"
-            style="height: 100%"
-        >
-            <!-- Popup window parent -->
-            <div
-                class="row justify-center items-center" 
-                style="position: absolute; margin-left: 100px; padding: 50px;  width: 100%; height: 100%; "
-                v-if="false"
-                @mouseover="blockMouseFn"
-                @mouseleave="unblockMouseFn"
-            >
-
-                <div
-                    class="col-2"
-                    style="z-index: 5000; transition: visibility 1.5s"
-                >
-                    <create-location-component
-                        class="q-pa-md"
-                    ></create-location-component>
-                    <!-- <q-card>
-                        asd
-                    </q-card> -->
-                </div>
-            </div>
-            <div
-                style="z-index: 4000;"
-                class="column q-ma-sm "
-                @mouseover="blockMouseFn"
-                @mouseleave="unblockMouseFn"
-            >
-                <!-- Search bar -->
-                <q-input
-                    :class="{'searchbar': true, 'searchbarhover' : true, }"
-                    :bg-color="(darkMode && darkMode == true) ? 'dark' : 'white'"
-                    :style="{'width': (recommendationActive || searchActive) ? '240px' : '100px', }"
-                    dense
-                    square 
-                    outlined
-                    id="searchbar"
-                    label-slot
-                    @focus="focusSearchFn(true)"
-                    @blur="focusSearchFn(false)"
-                    @mouseover="leaveSearchFn(false)"
-                    @mouseleave="leaveSearchFn(true)"
-                >
-                    <template #label>
-                        <div
-                            class="text-caption"
-                            :style="{'color': (darkMode && darkMode == true) ? 'white' : '#3a4149'}"
-                        >
-                            Search
-                        </div>
-                    </template>
-                    <template v-slot:append>
-                        <q-icon 
-                            name="search" 
-                            size="sm" 
-                            :color="(darkMode && darkMode == true) ? 'white' : '#3a4149'"
-                        />
-                    </template>
-                </q-input>
-                <!-- Suggestions / Query results -->
-                <q-slide-transition
-                    :duration="500" 
-                    appear
-                >
-                    <div
-                        :style="{'background-color': (darkMode && darkMode == true) ? '#3a4149' : 'white'}"
-                        class="q-mt-md"
-                        v-show="recommendationActive"
-                    >
-                        <q-list
-                            id="query"
-                            dark
-                            dense
-                            separator
-                            padding
-                        >
-                            <q-item clickable v-ripple>
-                                <q-item-section>Single line item</q-item-section>
-                            </q-item>
-
-                            <q-item clickable v-ripple>
-                                <q-item-section>
-                                <q-item-label>Item with caption</q-item-label>
-                                <q-item-label caption>Caption</q-item-label>
-                                </q-item-section>
-                            </q-item>
-
-                            <q-item clickable v-ripple>
-                                <q-item-section>
-                                <q-item-label overline>OVERLINE</q-item-label>
-                                <q-item-label>Item with caption</q-item-label>
-                                </q-item-section>
-                            </q-item>
-                        </q-list>
-                    </div>
-                </q-slide-transition>
-            </div>
-            <q-card
-                class="row no-wrap "
-                style="z-index: 4000"
-                :style="{ 'background-color': (darkMode && darkMode == true) ? '#3a4149' : ''}"
-                :id="(!trigger) ? 'mainDialog' : 'mainDialogActive'"
-                @mouseover="blockMouseFn"
-                @mouseleave="unblockMouseFn"
-            >
-                <div
-                    class="column no-warp q-mt-sm q-mr-sm" 
-                    id="buttons"
-                >
-                    <!-- zoom in -->
-                    <q-icon
-                        class="btn"
-                        name="add" 
-                        :color="(darkMode && darkMode == true) ? 'white' : '#3a4149'"
-                        :style="{'background-color': (darkMode && darkMode == true) ? '#3a4149' : 'white'}"
-                        @click="zoomFn('in')"
-                    >
-                        <q-tooltip anchor="center left" self="center right" :offset="[10, 10]">
-                            <div>Zoom in</div>
-                        </q-tooltip> 
-                    </q-icon>
-                    <!-- zoom out -->
-                    <q-icon 
-                        class="btn" 
-                        name="remove" 
-                        :color="(darkMode && darkMode == true) ? 'white' : '#3a4149'"
-                        :style="{'background-color': (darkMode && darkMode == true) ? '#3a4149' : 'white'}"
-                        @click="zoomFn('out')"
-                    >
-                        <q-tooltip anchor="center left" self="center right" :offset="[10, 10]">
-                            <div>Zoom out</div>
-                        </q-tooltip> 
-                    </q-icon>
-                    <!-- create location -->
-                    <q-icon 
-                        :class="{'btn': true, 'q-mt-md': true, 'btnActive' : (title == 'createLocation')}" 
-                        name="img:icons/add-location.png" 
-                        size="md"
-                        :color="(darkMode && darkMode == true) ? 'white' : '#3a4149'"
-                        :style="{'background-color': (darkMode && darkMode == true) ? '#3a4149' : 'white'}"
-                        @click="triggerFn('createLocation')"
-                    >
-                        <q-tooltip v-if="!trigger" anchor="center left" self="center right" :offset="[10, 10]">
-                            <div>Create location</div>
-                        </q-tooltip> 
-                    </q-icon>
-                    <!-- create route -->
-                    <q-icon 
-                        :class="{'btn': true, 'btnActive' : (title == 'createRoute')}" 
-                        name="img:icons/add-route.png" 
-                        size="sm"
-                        :color="(darkMode && darkMode == true) ? 'white' : '#3a4149'"
-                        :style="{'background-color': (darkMode && darkMode == true) ? '#3a4149' : 'white'}"
-                        @click="triggerFn('createRoute')"
-                    >
-                        <q-tooltip v-if="!trigger" anchor="center left" self="center right" :offset="[10, 10]">
-                            <div>Create route</div>
-                        </q-tooltip> 
-                    </q-icon>
-                    <!-- find -->
-                    <q-icon 
-                        :class="{'btn': true, 'btnActive' : (title == 'search')}" 
-                        name="search" 
-                        size="xs"
-                        :color="(darkMode && darkMode == true) ? 'white' : '#3a4149'"
-                        :style="{'background-color': (darkMode && darkMode == true) ? '#3a4149' : 'white'}"
-                        @click="triggerFn('search')"
-                    >
-                        <q-tooltip v-if="!trigger" anchor="center left" self="center right" :offset="[10, 10]">
-                            <div>Detailed search</div>
-                        </q-tooltip> 
-                    </q-icon>
-                    <!-- insert -->
-                    <!-- <q-icon 
-                        :class="{'btn': true, 'btnActive' : (title == 'insert')}" 
-                        name="add_circle_outline" 
-                        color="black"
-                        @click="triggerFn('insert')"
-                    >
-                        <q-tooltip v-if="!trigger" anchor="center left" self="center right" :offset="[10, 10]">
-                            <div>Insert</div>
-                        </q-tooltip> 
-                    </q-icon> -->
-
-                    <!-- skip -->
-                    <!-- edit location -->
-                    <q-icon 
-                        class="btn q-mt-md" 
-                        :class="{'btn': true, 'q-mt-md': true, 'btnActive' : (title == 'editLocation')}" 
-                        name="img:icons/edit-location.png" 
-                        size="md"
-                        :color="(darkMode && darkMode == true) ? 'white' : '#3a4149'"
-                        :style="{'background-color': (darkMode && darkMode == true) ? '#3a4149' : 'white'}"
-                        @click="triggerFn('editLocation')"
-                    >
-                        <q-tooltip v-if="!trigger" anchor="center left" self="center right" :offset="[10, 10]">
-                            <div>Edit location</div>
-                        </q-tooltip> 
-                    </q-icon>
-                    <!-- edit route -->
-                    <q-icon 
-                        :class="{'btn': true, 'btnActive' : (title == 'editRoute')}" 
-                        name="img:icons/edit0route.png" 
-                        size="sm"
-                        :color="(darkMode && darkMode == true) ? 'white' : '#3a4149'"
-                        :style="{'background-color': (darkMode && darkMode == true) ? '#3a4149' : 'white'}"
-                        @click="triggerFn('editRoute')"
-                    >
-                        <q-tooltip v-if="!trigger" anchor="center left" self="center right" :offset="[10, 10]">
-                            <div>Edit route</div>
-                        </q-tooltip> 
-                    </q-icon>
-                    <!-- add checkpoint -->
-                    <q-icon 
-                        :class="{'btn': true, 'btnActive' : (title == 'addCheckpoint')}" 
-                        name="check" 
-                        :color="(darkMode && darkMode == true) ? 'white' : '#3a4149'"
-                        :style="{'background-color': (darkMode && darkMode == true) ? '#3a4149' : 'white'}"
-                        @click="triggerFn('addCheckpoint')"
-                    >
-                        <q-tooltip v-if="!trigger" anchor="center left" self="center right" :offset="[10, 10]">
-                            <div>Add checkpoint</div>
-                        </q-tooltip> 
-                    </q-icon>
-                    <!-- highlight -->
-                    <q-icon 
-                        :class="{'btn': true, 'btnActive' : (title == 'highlight')}" 
-                        name="star" 
-                        :color="(darkMode && darkMode == true) ? 'white' : '#3a4149'"
-                        :style="{'background-color': (darkMode && darkMode == true) ? '#3a4149' : 'white'}"
-                        @click="triggerFn('highlight')"
-                    >
-                        <q-tooltip 
-                            anchor="center left" 
-                            self="center right" 
-                            :offset="[10, 10]"
-                            style="position: relative"
-                            v-if="!trigger"
-                        >
-                            <div 
-                                style="position: relative"
-                            >Highlight</div>
-                        </q-tooltip> 
-                    </q-icon>
-                </div> 
-                <div
-                    id="editContent"
-                    class="q-ma-md column q-mt-sm q-mr-sm"
-                    :style="{ 'background-color': (darkMode && darkMode == true) ? '#3a4149' : 'white', 'height': '100%', 'width': trigger ? '300px' : '0px', 'transition': 'width 0.5s' }"
-                    @click.self="null"
-                    ref="overlay"
-                >
-                    <div
-                        v-if="trigger"
-                        class="q-ma-sm"
-                        style="width: 270px;"
-                    >
-                        <div style="width: 100%" class="row items-center q-pb-none ">
-                            <div 
-                                class="text-h6 q-mt-md q-ml-sm"
-                                :style="{'color': (darkMode && darkMode == true) ? 'white' : '#3a4149'}"
-                            >
-                                {{ titleNice }}
-                           </div>
-                            <q-space />
-                            <q-btn 
-                                @click="trigger=false;title=''" 
-                                :style="{'color': (darkMode && darkMode == true) ? 'white' : '#3a4149'}"
-                                dark
-                                icon="close" 
-                                flat 
-                                round 
-                                dense 
-                            />
-                        </div>
-                        <div 
-                            class="column q-ma-md" 
-                            v-if="title == 'search'"
-                        >
-                            <q-input  
-                                dense
-                                label-color="black"
-                                color="black" 
-                                :debounce="200"
-                                v-model="searchCriteria" 
-                                label="Search for a location or a route" 
-                                @update:model-value="searchFn"
-                                filled
-                            />
-                            <q-list 
-                                bordered
-                                class="q-mt-md"
-                            >
-                                <q-item 
-                                    color="black" 
-                                    v-if="searchResults.length == 0"
-                                >
-                                    <div style="color: black">
-                                        No results for {{ searchCriteria }}
-                                    </div>
-                                </q-item>
-                                <q-item color="black" v-else v-for="result in searchResults" :key="result.id">
-                                    <div style="color: black">
-                                        {{ result }}
-                                    </div>
-                                </q-item>
-                            </q-list>
-                        </div>
-                        
-                        <create-location-component
-                            v-if="title == 'createLocation'" 
-                            class="q-pa-md"
-                            @update:focused="focusBeforeCreateFn"                
-                            @update:popup="updatePopupBeforeCreateFn"                
-                            @create:location="createLocationFn"                
-                            @update:type="changeTypeBeforeCreateFn"                
-                        ></create-location-component>
-                        
-                        <div class="column" v-if="title == 'createRoute'" style="background-color: white">
-                            craete route
-                            strating Location
-                            ending location
-                            intermediary location
-                            choose from multiple routes
-                        </div>
-                        <div class="column" v-if="title == 'insert'" style="background-color: white">
-                            insert something
-                        </div>
-                        
-                        <edit-location-component
-                            v-if="title == 'editLocation'"  
-                            :locationToEdit="locationToEdit"
-                            @update:location="updateLocationFn"                
-                        ></edit-location-component>
-                        
-                        <edit-route-component
-                            v-if="title == 'editRoute'"  
-                            class="q-pa-md"
-                            :routeToEdit="routeToEdit"
-                            @update:route="updateRouteFn"                
-                        ></edit-route-component>
-                        
-                        <div class="column" v-if="title == 'addCheckpoint'" style="background-color: white">
-                            add checkpoint
-                            get notification when a vehicle reaches the vicinity of this location
-                            <q-btn
-                                label="Create checkpoint"
-                            ></q-btn>
-                        </div>
-                        <div 
-                            class="column items-center" 
-                            v-if="title == 'highlight'"
-                            style="width: 100%; height: 100%"
-                        >
-                            <q-list v-if="highlights && highlights.length > 0">
-                                <q-item
-                                    v-for="highlight in highlights"
-                                    :key="highlight.id"
-                                >
-                                    {{ highlight }} 
-                                </q-item>
-                            </q-list>
-                            <div 
-                                v-else
-                                class="column items-center"    
-                            >
-                                <div 
-                                    class="text-h6"
-                                    :style="{'color': (darkMode && darkMode == true) ? 'white' : '#3a4149'}"
-                                >
-                                    You do not have highlighted items
-                                </div>
-                                <br>
-                                <!-- <q-btn
-                                    label="Create highlight"
-                                    style="margin-top: 100%"
-                                ></q-btn> -->
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </q-card>
-        </div>
     </div> 
 </template>
 
@@ -399,6 +11,8 @@
 #mapContainer
     width: 100%
     height: 100%
+    min-width: 400px
+    min-height: 400px
 #mainDialog
     background-color: rgba(255,255,255, 0)
     height: 100%
@@ -443,36 +57,78 @@
 #query
     transition: visibility 0.5s, opacity 0.5s linear
 </style>
-<script lang="ts">
 
-export default {
-    name: 'MapComponent',
-    props: {
+<script setup lang="ts">
+import { ref, onMounted, watch, onUnmounted, computed, toRefs, } from 'vue'
+import 'leaflet/dist/leaflet.css'
+import L, { tileLayer } from 'leaflet'
+import GeoJSON from 'geojson'
+
+const props = defineProps({
+        // Content
+        title: {
+            type: String,
+            default: 'Map',
+            description: 'Map title',
+        },
+        // objects to be displayed
+        modelValue: {
+            type: Object,
+            validator(value) {
+                if (!Array.isArray(value)) {
+                    console.warn('Not array')
+                    return false
+                }
+                for (const el of value) {
+                    if (!['static-object', 'active-object', 'route'].includes(el.type)) {
+                        return false
+                    }
+                }
+                return true
+            },
+            default(rawProps: any) {
+                return []
+                // rawProps.map((prop) => {
+                //     if (!prop.icon) prop.icon = DEFAULT_OBJECT_ICON
+                //     if (!prop.icon) prop.icon = DEFAULT_OBJECT_ICON
+                // })        
+            },
+        },
+        // Map type
+        type: {
+            type: String,
+            default: 'interactive',
+            validator(val: string) {
+                return ['interactive', 'snapshot', 'responsive'].includes(val)
+            }
+        },
         // Center of the map
         center: {
             type: Object,
             // Center of europe
-            default(rawProps)   {
-                return {}
-                // return GeoJSON.parse(
-                //     { 
-                //         name: 'Location A', 
-                //         category: 'Store', 
-                //         street: 'Market', 
-                //         lat: 47.4811282,
-                //         lng: 18.9902218
-                //     }, 
-                //     {Point: ['lat', 'lng']});
+            default(rawProps: any)   {
+                // @ts-ignore
+                return GeoJSON.parse(
+                    { 
+                        name: 'Location A', 
+                        category: 'Store', 
+                        street: 'Market', 
+                        lat: 47.4811282,
+                        lng: 18.9902218
+                    }, 
+                    {Point: ['lat', 'lng']});
                 // [47.4811282, 18.9902218],
             },
             validator(value) {
                 return true;
             }
         },
+        // Style
+        // Zoom level
         zoomLevel: {
             type: Number,
             default: 7,
-            validator(value) {
+            validator(value: Number) {
                 return value > 0;
             }
         },
@@ -480,29 +136,6 @@ export default {
         color: {
             type: String, 
             default: '(128, 128, 128, 0)',
-        },
-        // Entities to be shown
-        locations: {
-            type: Object,
-            default: [],
-        },
-        routes: {
-            type: Object,
-            default: [],
-        },
-        movingObjects: {
-            type: Object,
-            default: [{}],
-        },
-        vehicleLocations: {
-            type: Object,
-            default: [],
-        },
-        mode: {
-            type: String,
-            validator(value) {
-                return ['interactive', 'snapshot', 'responsive', ].includes(value)
-            },
         },
         // Tile layer
         tileLayerUrl: {
@@ -542,9 +175,8 @@ export default {
             type: [Number, String],
             default: 300,
             description: 'Map width in pixels',
-            validator(val) {
-                return true
-                if (typeof val === 'string' || val instanceof String) {
+            validator(val: string | number) {
+                if (typeof val === 'string') {
                     const re = /[1-9]+px/;
                     return /^(([1-9][0-9]+)|(0))px$/.test(val)
                 } 
@@ -555,14 +187,18 @@ export default {
             type: [Number, String],
             default: 300,
             description: 'Map width in pixels',
-            validator(val: any|string|String) {
-                return true
-                if (typeof val === 'string' || val instanceof String) {
+            validator(val: number|string) {
+                if (typeof val === 'string') {
                     const re = /[1-9]+px/;
                     return /^(([1-9][0-9]+)|(0))px$/.test(val)
                 } 
                 return val > 0
             },
+        },
+        square: {
+            type: Boolean,
+            default: false,
+            description: 'height=width=min(height, width)',
         },
         // Gets passed to every subcomponent
         dense: {
@@ -576,91 +212,198 @@ export default {
             type: Boolean,
             default: false,
         },
-        // object: {
-            // type: 'static-object|active-object|route',
-            // data: GeoJSON,
-            // icon: 'default',
-            // iconSize: 'xs|sm|md|lg|xl'.split('\''),
-            // emit event for moving object
-            // emit: true,
-            // called every time 
-            // fetchFunction
-            // fetchFunctionMask
-            // where to look for lat and lon
-            // refreshRate(in seconds),
-        // },
-        objects: {
-            type: Object,
-            validator(value) {
-                if (!Array.isArray(value)) {
-                    console.warn('Not array')
-                    return false
-                }
-                for (const el of value) {
-                    if (!['static-object', 'active-object', 'route'].includes(el.type)) {
-                        return false
-                    }
-                }
-                return true
-            },
-            default(rawProps) {
-                return []
-                // rawProps.map((prop) => {
-                //     if (!prop.icon) prop.icon = DEFAULT_OBJECT_ICON
-                //     if (!prop.icon) prop.icon = DEFAULT_OBJECT_ICON
-                // })        
-            },
-        },
-        // Modes
-        interactive: {
-            type: Boolean,
-            default: false,
-        },
-        snapshot: {
-            type: Boolean,
-            default: false,
-        },
-        responsive: {
-            type: Boolean,
-            default: false,
-        },
-        // Focused entity
-        focused: {
-            type: Object,
-        },
-        // location icon
-        locationIcon: {
-            type: String,
+        // Static object icon
+        staticObjectIcon: {
+            type: [String, Object, ],
             default: 'https://www.politiadefrontiera.ro/vault/images/ptfpin_green.png',
+        },
+        // Active object icon
+        activeObjectIcon: {
+            type: [String, Object, ],
+            default: 'https://www.politiadefrontiera.ro/vault/images/ptfpin_green.png',
+        },
+        // Route start icon
+        routeIconStart: {
+            type: [String, Object, ],
+            default: 'https://www.politiadefrontiera.ro/vault/images/ptfpin_green.png',
+        },
+        // Route destination icon
+        routeIconDest: {
+            type: [String, Object, ],
+            default: 'https://www.politiadefrontiera.ro/vault/images/ptfpin_green.png',
+        },
+        // Route default color
+        routeColor: {
+            type: String,
+            default: 'grey',
+        },
+        // Route active color
+        routeColorActive: {
+            type: String,
+            default: 'red',
+        },
+        // Active color for every object
+        activeColor: {
+            type: [String, Function],
+            default: 'red',
+        },
+        // Behaviour
+        blockMouseEvents: {
+            type: Boolean,
+            default: false,
+            description: 'Block mouse events',
         },
         // vehicle icon
         // route default color
         // route highlight color
         // zoom on location when selected
         // show zoom buttons
-        // block mouse events on overlay
-        // block mouse events for each component
+
         // emit click event
         // 
-    },
-    
-    
-    
+})
+
+// Leaflet entry point
+let mapDiv : any
+// Map container ref
+const mapContainer = ref(null)
+// Overlay ref
+const overlay = ref(null)
+
+const map = {
+    tileLayer: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 25,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }),
 }
-// TODO
-// set routes[0] and locations[0] as initial selected routes
-// Zoom on select
-// Hover popup
-</script>
+
+
+const height = ref()
+const width = ref()  
+
+const {
+    dark,
+    type,
+    center,
+    zoomLevel,
+} = toRefs(props)
+
+watch(() => props.height, (val) => {
+    if (typeof val === 'string' && val.includes('px')) {
+        height.value = val.substring(0, val.indexOf('px'))
+    } else {
+        height.value = val
+    }
+}, {
+    immediate: true,
+})
+
+watch(() => props.width, (val) => {
+    if (typeof val === 'string' && val.includes('px')) {
+        width.value = val.substring(0, val.indexOf('px'))
+    } else {
+        width.value = val
+    }
+}, {
+    immediate: true,
+})
+
+watch(() => props.type, (val) => {
+    switch (val) {
+        case 'snapshot':
+            console.log('Snapshot') 
+            // block mouse events on overlay
+            // block mouse events for each component
+            break
+        case 'responsive': 
+        
+            break
+        default:
+            break
+    }
+}, {
+    immediate: true,
+})
 
 
 
-<script setup lang="ts">
-import { ref } from 'vue'
+const background = computed(() => {
+    return (dark.value) ? 'white' : 'dark'
+})
 
-defineProps<{ msg: string }>()
 
-const count = ref(0)
+const emit = defineEmits(['subscribe:user', 'subscribe'])
+
+// defineProps<{ msg: string }>()
+
+// Leaflet setup method
+const setupLeafletMapFn = () => {
+    // Constructor with center location
+    // @ts-ignore
+    mapDiv = L.map(mapContainer.value, {
+        closePopupOnClick: type.value === 'snapshot' ? false : true,
+        dragging: type.value === 'snapshot' ? false : true,
+        zoomControl: false,
+        attributionControl:false,
+    }).setView(center.value.geometry.coordinates.reverse(), zoomLevel.value)
+
+    
+    setTileLayerFn('default', )
+ 
+    // L.Icon.Default.prototype.options.iconUrl = 'https://png.pngtree.com/png-vector/20190223/ourmid/pngtree-vector-house-icon-png-image_695369.jpg',
+    // setupIconFn()
+    // blockEventsOverOverlayFn()
+} 
+
+const setTileLayerFn = (type: string='custom', tileLayerUrl: string|null=null, tileLayerAttribution: string|null=null, maxZoom: number = 25) => {
+    // TODO remove last tileLayer
+    // let url = tileLayerUrl.value, maxZoom = tileLayerZoomLevel.value, attribution = tileLayerAttribution.value
+    mapDiv.removeLayer(map.tileLayer)
+    switch (type) {
+        case 'dark':
+            map.tileLayer  = L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
+                maxZoom: 25,
+                attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>, &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors' 
+            })
+            break;
+        case 'default':
+            map.tileLayer  = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 25,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            })
+            break;
+        default: 
+            if (tileLayerUrl && tileLayerAttribution)
+                map.tileLayer  = L.tileLayer(tileLayerUrl, {
+                    maxZoom: maxZoom,
+                    attribution: tileLayerAttribution,
+                })
+            map.tileLayer  = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 25,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            })
+            break
+    }
+    map.tileLayer.addTo(mapDiv)
+}
+
+watch(dark, (val) => {
+    if (val) {
+        setTileLayerFn('dark')
+    } else {
+        setTileLayerFn()
+    }
+})
+
+onMounted(() => {
+    setupLeafletMapFn()
+    if (dark.value) {
+        setTileLayerFn('dark')
+    }
+})
+
+
+
 </script>
 
 
