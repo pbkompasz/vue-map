@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // This starter template is using Vue 3 <script setup> SFCs
 // Check out https://vuejs.org/api/sfc-script-setup.html#script-setup
+//@ts-ignore
 import Map from './components/Map.vue'
 </script>
 
@@ -12,8 +13,12 @@ import Map from './components/Map.vue'
         <Map 
             id="map"
             height="400px"
-            :width="400"
-        ></Map>
+            :width="500"
+            square
+            dark
+        >
+
+        </Map>
     </div>
 </template>
 
@@ -35,5 +40,6 @@ import Map from './components/Map.vue'
 
 #map
     background-color: inherit
+    border-style: solid
 
 </style>

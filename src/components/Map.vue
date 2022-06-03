@@ -3,6 +3,7 @@
         id="mapContainer"
         style="z-index:0; width: 400px; height: 400px"
         ref="mapContainer"
+        :style="[baseMapStyle, mapStyle]"
     >
     </div> 
 </template>
@@ -402,7 +403,17 @@ onMounted(() => {
     }
 })
 
+// Style object
+const baseMapStyle = ref({
+    width: '400px',
+    height: '400px',
+})
 
+// Style object
+const mapStyle = ref({
+    width: width.value + 'px',
+    height: height.value + 'px',
+})
 
 </script>
 
