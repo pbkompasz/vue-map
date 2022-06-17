@@ -79,6 +79,7 @@ const type = ref('interactive')
                 <Map
                     :height="400"
                     width="400px"
+                    zoom-icon-location="bottom-right"
                 >
                     <!-- center="40.805449,-73.965441" -->
                     <!-- zoom -->
@@ -109,6 +110,9 @@ const type = ref('interactive')
                                 @click="switchOverlay"
                             >button</button> -->
                     </template>
+                    <!-- <template #text>
+                        <div style="color: white; font-size: 20px;">Use ctrl + scroll to zoom the map</div>
+                    </template> -->
                 </Map>
             </div>
             <div style="max-width: 50vw">

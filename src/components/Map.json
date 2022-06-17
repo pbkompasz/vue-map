@@ -185,6 +185,27 @@
         },
         "overlay": {
             "desc": "This is where additional buttons can go"
+        },
+        "overlay-left": {
+            "desc": "This is where additional buttons can go"
+        },
+        "overlay-left-top": {
+            "desc": "This is where additional buttons can go"
+        },
+        "overlay-left-bottom": {
+            "desc": "This is where additional buttons can go"
+        },
+        "overlay-right": {
+            "desc": "This is where additional buttons can go"
+        },
+        "overlay-right-top": {
+            "desc": "This is where additional buttons can go"
+        },
+        "overlay-right-bottom": {
+            "desc": "This is where additional buttons can go"
+        },
+        "warning-text": {
+            "desc": "Like in google maps Ctrl + wheel"
         }
     },
     "events": {

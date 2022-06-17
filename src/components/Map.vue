@@ -10,6 +10,11 @@
             :style="[mapStyle]"
         >
             <div
+                id="random-text"
+            >
+                <slot name="text">asdf</slot>
+            </div>
+            <div
                 style="z-index: 5000; position: absolute; margin-left: 100px; padding: 50px;  width: 100%; height: 100%;"
                 id="notification"
                 v-if="notifications.length > 0"
@@ -36,13 +41,20 @@
                             <div
                                 class="slot-column"
                             >
-                            <div>
+                                <div class="row">
 
-                                <slot name="overlay-left-top"></slot>
-                            </div>
-                                <div>
-
-                                <slot name="overlay-left-bottom"></slot>
+                                    <div class="column" v-if="zoomIconLocation=='top-left'">
+                                        <button type="button" onclick="alert('Hello world!')">+</button>
+                                        <button type="button" onclick="alert('Hello world!')">-</button>
+                                    </div>
+                                    <slot name="overlay-left-top"></slot>
+                                </div>
+                                <div class="row">
+                                    <div class="column" v-if="zoomIconLocation=='bottom-left'">
+                                        <button type="button" onclick="alert('Hello world!')">+</button>
+                                        <button type="button" onclick="alert('Hello world!')">-</button>
+                                    </div>
+                                    <slot name="overlay-left-bottom"></slot>
                                 </div>
                             </div>
                         </slot>
@@ -57,13 +69,19 @@
                             <div
                                 class="slot-column"
                             >
-                            <div>
-
-                                <slot name="overlay-right-top"></slot>
-                            </div>
-                                <div>
-
-                                <slot name="overlay-right-bottom"></slot>
+                                <div class="row">
+                                    <div class="column" v-if="zoomIconLocation=='top-right'">
+                                        <button type="button" onclick="alert('Hello world!')">+</button>
+                                        <button type="button" onclick="alert('Hello world!')">-</button>
+                                    </div>
+                                    <slot name="overlay-right-top"></slot>
+                                </div>
+                                <div class="row">
+                                    <div class="column" v-if="zoomIconLocation=='bottom-right'">
+                                        <button type="button" onclick="alert('Hello world!')">+</button>
+                                        <button type="button" onclick="alert('Hello world!')">-</button>
+                                    </div>
+                                    <slot name="overlay-right-bottom"></slot>
                                 </div>
                             </div>
                         </slot>
@@ -134,6 +152,8 @@
     justify-content: space-between
     height: 100%
     width: 100%
+    // TODO
+    // background-color: rgba(0, 0, 0, 0.45)
 
 #overlay-left
     z-index: 4000
@@ -148,6 +168,23 @@
     height: 100%
     max-height: inherit
 
+#random-text
+    z-index: 4500
+    position: absolute
+    width: 100%
+    height: 100%
+    text-align: center
+    display: flex
+    flex-direction: column
+    justify-content: center
+
+.row
+    display: flex
+
+.column
+    display: flex
+    flex-direction: column
+
 </style>
 
 <script setup lang="ts">
@@ -158,7 +195,9 @@ import L, { LayerOptions, TileLayer, TileLayerOptions } from 'leaflet'
 import GeoJSON, { GeoJsonObject } from 'geojson'
 
 import { VueMap } from './Map'
-import { IModelValue } from './map'
+import { IColor, IIcon, IModelValue, Position } from './map'
+
+import { validateColor, validateIcon } from './util/util'
 
 const slots = useSlots()
 const props = defineProps({
@@ -283,6 +322,11 @@ const props = defineProps({
             default: false,
             description: 'height=width=min(height, width)',
         },
+        // Default z-index for overlay
+        // default text has this
+        // than comes the overlay
+        // then popup
+        // then warnings, errors
         overlayZindex: {
             type: Number,
             default: 4000,
@@ -297,12 +341,17 @@ const props = defineProps({
         // Every icon changes to a dark one
         dark: {
             type: Boolean,
-            default: false,
+            defult: false,
         },
+        // TODO download and replace default with those
         // Static object icon
         staticObjectIcon: {
             type: [String, Object, ],
             default: 'https://www.politiadefrontiera.ro/vault/images/ptfpin_green.png',
+            // default: VueMap.DEFAULT_STATIC_OBJECT_ICON,
+            validator(val: IIcon) {
+                return validateIcon(val) 
+            }
         },
         // Active object icon
         activeObjectIcon: {
@@ -320,22 +369,56 @@ const props = defineProps({
             default: 'https://www.politiadefrontiera.ro/vault/images/ptfpin_green.png',
         },
         // Route default color
-        // TODO
         routeColor: {
             type: String,
-            default: 'grey',
+            default: VueMap.ROUTE_DEFAULT_COLOR,
+            validator(val: IColor) {
+                return validateColor(val)
+            },
+            description: 'Default color for every route',
         },
         // Route active color
-        // TODO
         routeColorActive: {
             type: String,
-            default: 'red',
+            default: VueMap.ROUTE_DEFAULT_ACTIVE_COLOR,
+            validator(val: IColor) {
+                return validateColor(val)
+            },
+            description: 'Default active color for every route',
         },
         // Active color for every object
-        // TODO
         activeColor: {
             type: [String, Function],
-            default: 'red',
+            default: VueMap.DEFAULT_ACTIVE_COLOR,
+            validator(val: IColor) {
+                return validateColor(val)
+            },
+            description: 'Default active color for every object',
+        },
+        blurMap: {
+            type: Boolean,
+            default: false,
+            // TODO
+            description: 'Backgrond-color of the overlay',
+        },
+        darkenMap: {
+            type: Boolean,
+            default: false,
+            description: 'Backgrond-color of the overlay is set to transparent grey'
+        },
+        disableZoom: {
+            type: Boolean,
+            default: false,
+        },
+        zoomIconLocation: {
+            type: String,
+            default: 'top-left',
+            validator(val: Position) {
+                if (!['top-left', 'top-right', 'bottom-left', 'bottom-right'].includes(val)) {
+                    return false
+                }
+                return true
+            }
         },
         // Behaviour
         // TODO
@@ -409,6 +492,7 @@ const {
     showDevWarnings,
     disableDoubleClickZoom,
     disableScroolWheelZoom,
+    zoomIconLocation,
 } = toRefs(props)
 
 watch(() => props.height, (val) => {

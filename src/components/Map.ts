@@ -32,8 +32,9 @@ export class VueMap {
     static readonly DEFAULT_WIDTH = 400
     static readonly DEFAULT_HEIGHT = 400
     static readonly ROUTE_DEFAULT_COLOR = '#615f5f'
-    static readonly ROUTE_HIGHLIGHT_COLOR = '#ff0000'
+    static readonly ROUTE_DEFAULT_ACTIVE_COLOR = '#ff0000'
     static readonly DEFAULT_COLOR = '#808080'
+    static readonly DEFAULT_ACTIVE_COLOR = '#ff0000'
     static readonly DEFAULT_MAP_TYPE = 'interactive'
     static readonly DEFAULT_ZOOM_LEVEL = 25
 

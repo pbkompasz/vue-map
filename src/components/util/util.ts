@@ -1,6 +1,6 @@
 import { GeoJsonObject } from "geojson";
 import parse from 'parse-css-color'
-import { Color } from "../Map";
+import { IColor, IIcon } from "../map";
 
 const parseCenter = (center: string|Object|GeoJsonObject|any, defaultCenter: GeoJsonObject) => {
     const res = {
@@ -42,7 +42,7 @@ const parseCenter = (center: string|Object|GeoJsonObject|any, defaultCenter: Geo
     return 
 }
 
-const parseColor = (color: string, defaultColor : Color|string = '#808080') => {
+const parseColor = (color: string, defaultColor : IColor|string = '#808080') => {
     try {
         return parse(color) 
     } catch (error: any) {
@@ -50,7 +50,22 @@ const parseColor = (color: string, defaultColor : Color|string = '#808080') => {
     }
 }
 
+// TODO
+function validateColor(color: IColor) {
+
+    return true
+}
+
+// TODO
+// Icon is a remote url
+function validateIcon(icon: IIcon) {
+
+    return true
+}
+
 export {
     parseCenter,
     parseColor,
+    validateColor,
+    validateIcon,
 }
