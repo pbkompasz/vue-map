@@ -1,19 +1,85 @@
 <template>
     <div 
         id="mapContainer"
-        style="z-index:0; width: 400px; height: 400px"
         ref="mapContainer"
-        :style="[baseMapStyle, mapStyle]"
+        :style="[mapStyle]"
     >
+         <div
+            class="overlay edit"
+            v-if="type!=='snapshot'"
+            :style="[mapStyle]"
+        >
+            <div
+                style="z-index: 5000; position: absolute; margin-left: 100px; padding: 50px;  width: 100%; height: 100%;"
+                id="notification"
+                v-if="notifications.length > 0"
+                @mouseover="blockMouseFn"
+                @mouseleave="unblockMouseFn"
+            >
+                <div
+                    style="background-color: blue; width: 200px; height: 200px;"
+                >
+                    popup
+                </div>
+            </div>
+            <slot name="overlay">
+                <div
+                    id="overlay-main"
+                >
+                    <div
+                        class="overlay"
+                        id="overlay-left"
+                        @mouseover="blockMouseFn"
+                        @mouseleave="unblockMouseFn"
+                    >
+                        <slot name="overlay-left">
+                            <div
+                                class="slot-column"
+                            >
+                            <div>
+
+                                <slot name="overlay-left-top"></slot>
+                            </div>
+                                <div>
+
+                                <slot name="overlay-left-bottom"></slot>
+                                </div>
+                            </div>
+                        </slot>
+                    </div>
+                    <div
+                        class="overlay"
+                        id="overlay-right"
+                        @mouseover="blockMouseFn"
+                        @mouseleave="unblockMouseFn"
+                    >
+                        <slot name="overlay-right">
+                            <div
+                                class="slot-column"
+                            >
+                            <div>
+
+                                <slot name="overlay-right-top"></slot>
+                            </div>
+                                <div>
+
+                                <slot name="overlay-right-bottom"></slot>
+                                </div>
+                            </div>
+                        </slot>
+                    </div>
+                </div>
+            </slot>
+            
+        </div>
     </div> 
 </template>
 
 <style scoped lang="sass">
 #mapContainer
-    width: 100%
-    height: 100%
-    min-width: 400px
-    min-height: 400px
+    width: 400px
+    height: 400px
+    z-index:0
 #mainDialog
     background-color: rgba(255,255,255, 0)
     height: 100%
@@ -57,14 +123,44 @@
     transition: width 0.5s
 #query
     transition: visibility 0.5s, opacity 0.5s linear
+
+.overlay
+    z-index: 4000
+
+#overlay-main
+    z-index: 4000
+    display: flex
+    flex-wrap: nowrap
+    justify-content: space-between
+    height: 100%
+    width: 100%
+
+#overlay-left
+    z-index: 4000
+#overlay-right
+    z-index: 4000
+
+.slot-column
+    display: flex
+    flex-direction: column 
+    justify-content: space-between
+    flex-wrap: nowrap
+    height: 100%
+    max-height: inherit
+
 </style>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, onUnmounted, computed, toRefs, } from 'vue'
-import 'leaflet/dist/leaflet.css'
-import L, { tileLayer } from 'leaflet'
-import GeoJSON from 'geojson'
+import { ref, onMounted, watch, onUnmounted, computed, toRefs, useSlots, } from 'vue'
 
+import 'leaflet/dist/leaflet.css'
+import L, { LayerOptions, TileLayer, TileLayerOptions } from 'leaflet'
+import GeoJSON, { GeoJsonObject } from 'geojson'
+
+import { VueMap } from './Map'
+import { IModelValue } from './map'
+
+const slots = useSlots()
 const props = defineProps({
         // Content
         title: {
@@ -99,7 +195,7 @@ const props = defineProps({
         type: {
             type: String,
             default: 'interactive',
-            validator(val: string) {
+            validator(val: 'interactive'| 'snapshot'| 'responsive') {
                 return ['interactive', 'snapshot', 'responsive'].includes(val)
             }
         },
@@ -120,7 +216,7 @@ const props = defineProps({
                     {Point: ['lat', 'lng']});
                 // [47.4811282, 18.9902218],
             },
-            validator(value) {
+            validator(value:GeoJsonObject) {
                 return true;
             }
         },
@@ -139,36 +235,22 @@ const props = defineProps({
             default: '(128, 128, 128, 0)',
         },
         // Tile layer
-        tileLayerUrl: {
+        tileLayer: {
             type: [String, Object],
             description: 'Used to load and display tile layers on the map',
             default() {
                 // return 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
             },
-            validator(value) {
+            validator(value: { urlTemplate: string, options: { attribution: string, [name: string]: any }}) {
                 // if (object...)
                 // L.tileLayer(test)
-                return true
-            }
-        },
-        tileLayerZoomLevel: {
-            type: [Number],
-            description: 'Tile layer zoomIn level',
-            default() {
-                return 20
-            },
-            validator(value) {
-                return true
-            }
-        },
-        tileLayerAttribution: {
-            type: String,
-            description: 'String to be shown in the attribution control',
-            default() {
-                return '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            },
-            validator(value) {
-                // check if legit string
+                if (!value.urlTemplate) {
+                    console.error('Missing tile Layer url! Using default tile layer')
+                    return false
+                }
+                if (!value.options.attribution) {
+                    console.warn('Missing tile layer attribution')
+                }
                 return true
             }
         },
@@ -200,6 +282,10 @@ const props = defineProps({
             type: Boolean,
             default: false,
             description: 'height=width=min(height, width)',
+        },
+        overlayZindex: {
+            type: Number,
+            default: 4000,
         },
         // Gets passed to every subcomponent
         dense: {
@@ -234,26 +320,52 @@ const props = defineProps({
             default: 'https://www.politiadefrontiera.ro/vault/images/ptfpin_green.png',
         },
         // Route default color
+        // TODO
         routeColor: {
             type: String,
             default: 'grey',
         },
         // Route active color
+        // TODO
         routeColorActive: {
             type: String,
             default: 'red',
         },
         // Active color for every object
+        // TODO
         activeColor: {
             type: [String, Function],
             default: 'red',
         },
         // Behaviour
+        // TODO
         blockMouseEvents: {
             type: Boolean,
             default: false,
             description: 'Block mouse events',
         },
+        // TODO
+        controlZoom: {
+            type: Boolean,
+            default: false,
+            description: 'When performing zoom with the mousewheel the ctrl button will have to be pressed. \'Use ctrl + scroll to zoom the map\' message will be shown.'
+        },
+        disableDoubleClickZoom: {
+            type: Boolean,
+            default: false,
+            description: 'Disable zoom-in when double right clicking with mouse',
+        },
+        disableScroolWheelZoom: {
+            type: Boolean,
+            default: false,
+            description: 'Disable zoom with scroll wheel',
+        },
+        // dev
+        showDevWarnings: {
+            type: Boolean, 
+            default: true,
+            description: 'Show developer warnings, errors in console',
+        }
         // vehicle icon
         // route default color
         // route highlight color
@@ -271,11 +383,17 @@ const mapContainer = ref(null)
 // Overlay ref
 const overlay = ref(null)
 
+// const vueMap = ref(new VueMap({}))
+
 const map = {
-    tileLayer: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 25,
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    }),
+    // tileLayer: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    //     maxZoom: 25,
+    //     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    // }),
+    tileLayer: L.tileLayer('http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',{
+        maxZoom: 20,
+        subdomains:['mt0','mt1','mt2','mt3']
+    })
 }
 
 
@@ -287,6 +405,10 @@ const {
     type,
     center,
     zoomLevel,
+    overlayZindex,
+    showDevWarnings,
+    disableDoubleClickZoom,
+    disableScroolWheelZoom,
 } = toRefs(props)
 
 watch(() => props.height, (val) => {
@@ -298,6 +420,8 @@ watch(() => props.height, (val) => {
 }, {
     immediate: true,
 })
+
+
 
 watch(() => props.width, (val) => {
     if (typeof val === 'string' && val.includes('px')) {
@@ -335,8 +459,6 @@ const background = computed(() => {
 
 const emit = defineEmits(['subscribe:user', 'subscribe'])
 
-// defineProps<{ msg: string }>()
-
 // Leaflet setup method
 const setupLeafletMapFn = () => {
     // Constructor with center location
@@ -347,7 +469,6 @@ const setupLeafletMapFn = () => {
         zoomControl: false,
         attributionControl:false,
     }).setView(center.value.geometry.coordinates.reverse(), zoomLevel.value)
-
     
     setTileLayerFn('default', )
  
@@ -356,9 +477,8 @@ const setupLeafletMapFn = () => {
     // blockEventsOverOverlayFn()
 } 
 
-const setTileLayerFn = (type: string='custom', tileLayerUrl: string|null=null, tileLayerAttribution: string|null=null, maxZoom: number = 25) => {
-    // TODO remove last tileLayer
-    // let url = tileLayerUrl.value, maxZoom = tileLayerZoomLevel.value, attribution = tileLayerAttribution.value
+// const setTileLayerFn = (type: string='custom', tileLayerUrl: string|null=null, tileLayerAttribution: string|null=null, maxZoom: number = 25) => {
+const setTileLayerFn = (type?: 'dark' | 'default', tileLayer?: { urlTemplate: string, options: { attribution: string, [name: string]: any } }, ) => {
     mapDiv.removeLayer(map.tileLayer)
     switch (type) {
         case 'dark':
@@ -368,40 +488,63 @@ const setTileLayerFn = (type: string='custom', tileLayerUrl: string|null=null, t
             })
             break;
         case 'default':
-            map.tileLayer  = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 25,
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            })
+            // Default tileLayer is already stored
             break;
         default: 
-            if (tileLayerUrl && tileLayerAttribution)
-                map.tileLayer  = L.tileLayer(tileLayerUrl, {
-                    maxZoom: maxZoom,
-                    attribution: tileLayerAttribution,
-                })
-            map.tileLayer  = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 25,
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            })
+            if (tileLayer)
+                map.tileLayer  = L.tileLayer(tileLayer.urlTemplate, tileLayer.options)
+            // Default tile layer remains 
             break
     }
     map.tileLayer.addTo(mapDiv)
 }
 
+// TODO
+const notifications = ref([])
+
 watch(dark, (val) => {
     if (val) {
         setTileLayerFn('dark')
     } else {
+        // Switches back to original tile if it exists or default
         setTileLayerFn()
     }
 })
 
+watch(() => props.tileLayer, (val) => {
+    // @ts-ignore
+    setTileLayerFn(undefined , val)
+})
+
+const vMap = ref(new VueMap())
+
 onMounted(() => {
+    verifySlots()
+    // verifyStyles()
     setupLeafletMapFn()
+    setupMapStyling()
+    setupMapBehaviour()
+})
+
+// TODO Check for misspellings, wrong values and such
+function verifyStyles() {
+
+}
+
+function setupMapStyling() {
     if (dark.value) {
         setTileLayerFn('dark')
     }
-})
+}
+
+// TODO Move to Map.ts
+function setupMapBehaviour() {
+    if (disableDoubleClickZoom) mapDiv.doubleClickZoom.disable()
+    // if (disableDoubleClickZoom) VMap.disableDoubleClickZoom
+    if (disableScroolWheelZoom) mapDiv.scrollWheelZoom.disable()
+    // if (disableDoubleClickZoom) VMap.disableScrollWheelZoom
+    blockEventsOverOverlayFn()
+}
 
 // Style object
 const baseMapStyle = ref({
@@ -415,6 +558,80 @@ const mapStyle = ref({
     height: height.value + 'px',
 })
 
+// Overlay style
+// TODO Bootstrap
+const overlayStyle = ref({
+    zIndex: overlayZindex.value,
+})
+
+// TODO Mouse event blocking
+const mapMoving = ref(false)
+
+const blockEventsOverOverlayFn = () => {
+    mapDiv.on('movestart', () => {
+        mapMoving.value = true
+    })
+    mapDiv.on('moveend', () => {
+        mapMoving.value = false
+    })
+    return;
+}
+
+const blockMouseFn = () => {
+    if (!mapMoving.value)
+        mapDiv.dragging.disable();
+    mapDiv.touchZoom.disable();
+    mapDiv.doubleClickZoom.disable();
+    mapDiv.scrollWheelZoom.disable();
+    mapDiv.boxZoom.disable();
+    mapDiv.keyboard.disable();
+}
+
+const unblockMouseFn = () => {
+    mapDiv.dragging.enable();
+    mapDiv.touchZoom.enable();
+    mapDiv.doubleClickZoom.enable();
+    mapDiv.scrollWheelZoom.enable();
+    mapDiv.boxZoom.enable();
+    mapDiv.keyboard.enable();
+}
+
+function verifySlots() {
+    let warnMessage = ''
+    if (slots.default) {
+        for (const property in slots) {
+            if (property != 'default') {
+                warnMessage += '\'' + property + '\' '
+            }
+        }
+    }
+    if (slots['overlay']) {
+        for (const property in slots) {
+            if (property != 'overlay' && property != 'default') {
+                warnMessage += '\'' + property + '\' '
+            }
+        }
+    }
+    if (slots['overlay-left']) {
+        if (slots['overlay-left-bottom']) {
+            warnMessage += '\'overlay-left-bottom \''
+        }
+        if (slots['overlay-left-top']) {
+            warnMessage += '\'overlay-left-top \''
+        }
+    }
+    if (slots['overlay-right']) {
+        if (slots['overlay-right-bottom']) {
+            warnMessage += '\'overlay-right-bottom \''
+        }
+        if (slots['overlay-right-top']) {
+            warnMessage += '\'overlay-right-top \''
+        }
+    }
+    if (showDevWarnings && warnMessage) {
+        console.warn('The following slots will be ignored: ' + warnMessage)
+    }
+}
 </script>
 
 
