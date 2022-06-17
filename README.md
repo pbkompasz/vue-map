@@ -1,10 +1,20 @@
 # Vue3-Map
 
-<!-- ## Directory structure
+## Directory structure
 
-    - src
-        - components
-            - Map.ts - contains default values and type declarations
-            - Map.vue - Main map component
-            - Map.json - documentation
-            - Notification.vue, Overlay.vue - default components -->
+src
+├── App.vue
+├── assets                              # Logos 
+│   ├── static-object-green.png         
+│   └── static-object-red.png
+├── components
+│   ├── map.d.ts                        # types
+│   ├── Map.json                        # documentation
+│   ├── Map.ts                          # 
+│   ├── Map.vue                         # Main Vue component
+│   ├── Notification.vue                # Default overlay components
+│   └── util                            # Utils
+│       └── util.ts
+├── data.ts                             # Demo data
+├── index.ts
+└── main.ts
