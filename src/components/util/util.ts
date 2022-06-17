@@ -39,9 +39,10 @@ const parseCenter = (center: string|Object|GeoJsonObject|any, defaultCenter: Geo
             throw new Error("Center type incompatible");
             break
     }
+    return 
 }
 
-const parseColor = (color: string, defaultColor: Color|string) => {
+const parseColor = (color: string, defaultColor : Color|string = '#808080') => {
     try {
         return parse(color) 
     } catch (error: any) {

@@ -1,32 +1,29 @@
 import { parseCenter } from "./util/util"
-import L, { tileLayer } from 'leaflet'
+import L, { GeoJSONOptions, tileLayer } from 'leaflet'
 import GeoJSON, { GeoJsonObject } from 'geojson'
+import { IModelValue } from "./map"
 
-const ASD: Number = 1
-
-export interface ModelValue {
-    id: Number,
-    object: Model,
-}
-
-export interface Model {
+export class ModelValue {
     
+    validate (modelValue: IModelValue[]) {
+    const returnMap = new Map()
+    modelValue.forEach((val) => {
+        // check if every id is unique
+        let id = val.id
+        if (val.id) {
+            if (returnMap.get(val.id)) {
+                console.warn('Id not unique, some functionalities might not work!')
+                id = Math.floor(Math.random() * 1000)
+                while (returnMap.get(id)) {
+                    id = Math.floor(Math.random() * 1000)
+                }
+            }
+        }
+        // ...
+        returnMap.set(id, val)
+    })
+    return []
 }
-
-export interface Color {
-    type: string, 
-    values: [Number, Number, Number], 
-    alpha: Number
-}
-
-export interface Icon {
-    name: string,
-    url: string,
-    fs: string,
-}
-
-export class Model {
-        
 }
 
 export class VueMap {

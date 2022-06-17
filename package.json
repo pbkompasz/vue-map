@@ -1,26 +1,61 @@
 {
   "name": "vue-map",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "A Map solution for Vue 3 built on Leaflet and GeoJSON",
+  "keywords": [
+    "vue",
+    "vue3",
+    "vuejs",
+    "vue3js",
+    "vue-component",
+    "vue3-component",
+    "map",
+    "vue-map",
+    "vue3-map",
+    "vuemap"
+  ],
+  "main": "dist/vue-map.umd.js",
+  "module": "dist/vue-map.es.js",
+  "types": "dist/src/index.d.ts",
+  "files": [
+    "dist/*",
+    "src/**/*.vue"
+  ],
+  "author": {
+    "name": "Peter-Bence Kompasz",
+    "email": "kompaszbence@gmail.com"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pbkompasz/vue-map.git"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
-    "@types/geojson": "^7946.0.8",
     "geojson": "^0.5.0",
     "geojson-validation": "^1.0.2",
     "leaflet": "^1.8.0",
-    "parse-css-color": "^0.2.1",
-    "vue": "^3.2.25"
+    "parse-css-color": "^0.2.1"
   },
   "devDependencies": {
+    "@types/geojson": "^7946.0.8",
     "@types/leaflet": "^1.7.10",
     "@vitejs/plugin-vue": "^2.3.3",
     "sass": "^1.52.1",
     "typescript": "^4.5.4",
     "vite": "^2.9.9",
-    "vue-tsc": "^0.34.7"
+    "vue-tsc": "^0.34.7",
+    "vue": "^3.2.25"
+  },
+  "peerDependencies": {
+    "vue": "^3.2.29"
+  },
+  "engines": {
+    "node": ">=12"
   }
 }
