@@ -2,6 +2,7 @@
 
 ## Directory structure
 
+```
 src   
 ├── App.vue  
 ├── assets                              # Logos   
@@ -18,3 +19,4 @@ src
 ├── data.ts                             # Demo data  
 ├── index.ts  
 └── main.ts  
+```
