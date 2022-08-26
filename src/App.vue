@@ -79,7 +79,7 @@ const type = ref('interactive')
                 <Map
                     :height="400"
                     width="400px"
-                    zoom-icon-location="bottom-right"
+                    zoom-button-location="bottom-right"
                 >
                     <!-- center="40.805449,-73.965441" -->
                     <!-- zoom -->

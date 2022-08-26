@@ -43,16 +43,32 @@
                             >
                                 <div class="row">
 
-                                    <div class="column" v-if="zoomIconLocation=='top-left'">
-                                        <button type="button" onclick="alert('Hello world!')">+</button>
-                                        <button type="button" onclick="alert('Hello world!')">-</button>
+                                    <div class="column" v-if="zoomButtonLocation=='top-left'">
+                                        <button 
+                                            type="button" 
+                                            onclick="alert('Hello world!')"
+                                            @click="zoomFn('in')"     
+                                        >+</button>
+                                        <button 
+                                            type="button" 
+                                            onclick="alert('Hello world!')"
+                                            @click="zoomFn('out')"     
+                                        >-</button>
                                     </div>
                                     <slot name="overlay-left-top"></slot>
                                 </div>
                                 <div class="row">
-                                    <div class="column" v-if="zoomIconLocation=='bottom-left'">
-                                        <button type="button" onclick="alert('Hello world!')">+</button>
-                                        <button type="button" onclick="alert('Hello world!')">-</button>
+                                    <div class="column" v-if="zoomButtonLocation=='bottom-left'">
+                                        <button 
+                                            type="button" 
+                                            onclick="alert('Hello world!')"
+                                            @click="zoomFn('in')"     
+                                        >+</button>
+                                        <button 
+                                            type="button" 
+                                            onclick="alert('Hello world!')"
+                                            @click="zoomFn('out')"     
+                                        >-</button>
                                     </div>
                                     <slot name="overlay-left-bottom"></slot>
                                 </div>
@@ -70,16 +86,32 @@
                                 class="slot-column"
                             >
                                 <div class="row">
-                                    <div class="column" v-if="zoomIconLocation=='top-right'">
-                                        <button type="button" onclick="alert('Hello world!')">+</button>
-                                        <button type="button" onclick="alert('Hello world!')">-</button>
+                                    <div class="column" v-if="zoomButtonLocation=='top-right'">
+                                        <button 
+                                            type="button" 
+                                            onclick="alert('Hello world!')"
+                                            @click="zoomFn('in')"     
+                                        >+</button>
+                                        <button 
+                                            type="button" 
+                                            onclick="alert('Hello world!')"
+                                            @click="zoomFn('out')"     
+                                        >-</button>
                                     </div>
                                     <slot name="overlay-right-top"></slot>
                                 </div>
                                 <div class="row">
-                                    <div class="column" v-if="zoomIconLocation=='bottom-right'">
-                                        <button type="button" onclick="alert('Hello world!')">+</button>
-                                        <button type="button" onclick="alert('Hello world!')">-</button>
+                                    <div class="column" v-if="zoomButtonLocation=='bottom-right'">
+                                        <button 
+                                            type="button" 
+                                            onclick="alert('Hello world!')"
+                                            @click="zoomFn('in')"     
+                                        >+</button>
+                                        <button 
+                                            type="button" 
+                                            onclick="alert('Hello world!')"
+                                            @click="zoomFn('out')"     
+                                        >-</button>
                                     </div>
                                     <slot name="overlay-right-bottom"></slot>
                                 </div>
@@ -88,7 +120,6 @@
                     </div>
                 </div>
             </slot>
-            
         </div>
     </div> 
 </template>
@@ -406,11 +437,11 @@ const props = defineProps({
             default: false,
             description: 'Backgrond-color of the overlay is set to transparent grey'
         },
-        disableZoom: {
+        disableZoomButton: {
             type: Boolean,
             default: false,
         },
-        zoomIconLocation: {
+        zoomButtonLocation: {
             type: String,
             default: 'top-left',
             validator(val: Position) {
@@ -465,6 +496,32 @@ let mapDiv : any
 const mapContainer = ref(null)
 // Overlay ref
 const overlay = ref(null)
+// TODO
+// https://gis.stackexchange.com/questions/225098/using-google-maps-static-tiles-with-leaflet
+// Hybrid,
+
+// googleHybrid = L.tileLayer('http://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}',{
+//     maxZoom: 20,
+//     subdomains:['mt0','mt1','mt2','mt3']
+// });
+// satellite,
+
+// googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{
+//     maxZoom: 20,
+//     subdomains:['mt0','mt1','mt2','mt3']
+// });
+// Terrain
+
+// googleTerrain = L.tileLayer('http://{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}',{
+//     maxZoom: 20,
+//     subdomains:['mt0','mt1','mt2','mt3']
+// });
+// Note that difference in the "lyrs" parameter in the URL:
+
+// Hybrid: s,h;
+// Satellite: s;
+// Streets: m;
+// Terrain: p;
 
 // const vueMap = ref(new VueMap({}))
 
@@ -492,7 +549,7 @@ const {
     showDevWarnings,
     disableDoubleClickZoom,
     disableScroolWheelZoom,
-    zoomIconLocation,
+    zoomButtonLocation,
 } = toRefs(props)
 
 watch(() => props.height, (val) => {
@@ -716,6 +773,23 @@ function verifySlots() {
         console.warn('The following slots will be ignored: ' + warnMessage)
     }
 }
+
+// TODO
+// Zoom in or out
+function zoomFn(type: 'in' | 'out') {
+    console.log('zooming')
+    if (type == 'in')
+        mapDiv.zoomIn()
+    else if (type == 'out')
+        mapDiv.zoomOut()
+}
+
+function refreshMap() {
+
+}
+
+
+
 </script>
 
 
