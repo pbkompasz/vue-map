@@ -134,7 +134,7 @@ export const useMapProps = {
   // objects to be displayed
   modelValue: {
     type: Object,
-    validator(value) {
+    validator(value: any) {
       if (!Array.isArray(value)) {
         console.warn('Not array');
         return false;
@@ -345,7 +345,7 @@ export const useMapProps = {
   zoomButtonLocation: {
     type: String,
     default: 'top-left',
-    validator(val: NewType) {
+    validator(val: `${'top' | 'bottom'}-${'left' | 'right'}`) {
       if (
         !['top-left', 'top-right', 'bottom-left', 'bottom-right'].includes(val)
       ) {

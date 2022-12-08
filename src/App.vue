@@ -1,7 +1,4 @@
 <script setup lang="ts">
-// This starter template is using Vue 3 <script setup> SFCs
-// Check out https://vuejs.org/api/sfc-script-setup.html#script-setup
-//@ts-ignore
 import Map from './components/Map.vue'
 import { ref } from 'vue'
 
@@ -14,8 +11,6 @@ const type = ref('interactive')
 
 <template>
   <div class="container">
-    <div id="yourName">
-    </div>
     <div>
       <h2>Demo</h2>
       <div id="map" class="container">
@@ -122,6 +117,7 @@ const type = ref('interactive')
     width: 100%
     display: flex
     flex-direction: column
+    margin: auto auto
 
 #yourName
     text-align: center
@@ -160,7 +156,7 @@ div
     overflow-y: auto 
     margin: 0 20px
     padding: 20px
-    border-style: outset
+    border: solid grey
 
 .criteria
     display: flex
